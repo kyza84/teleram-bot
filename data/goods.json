@@ -1,0 +1,22 @@
+{
+"items": [ 
+{
+"id":1,
+"type":"футболка",
+"category":"одежда",
+"prisecategory":"дешево",
+"price":20,
+"stock":5,
+"variants":["S","M","L","XL"]
+},
+{
+"id":2,
+"type":"худи",
+"category":"одежда",
+"prisecategory":"средне",
+"price":60,
+"stock":2,
+"variants":["S","M","L","XL"]
+}  
+]
+}   
