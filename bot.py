@@ -91,6 +91,45 @@ async def show_cart(update, context):
     text += f"\nИтого: €{total}"
     await update.message.reply_text(text)
 
+
+async def add_to_cart(update, context):
+    # /add 1
+    if not context.args:
+        await update.message.reply_text("Укажите ID товара. Пример: /add 1")
+        return
+
+    try:
+        item_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("ID Должен быть числом. Пример: /add 1")
+        return
+    items = load_goods()
+    item = next((it for it in items if it.get("id") == item_id), None)
+
+    if not item:  
+        await update.message.reply_text(f"Товар с ID #{item_id} не найден.")
+        return
+
+    user_id = update.effective_user.id
+    cart = CARTS.setdefault(user_id, {})
+
+    curerent_qty = cart.get(item_id, 0)
+    stock = item.get("stock", 0)
+
+    if curerent_qty + 1 >= stock:
+        await update.message.reply_text(f"Недостаточно товара на складе. Остаток: {stock}, в вашей корзине: {curerent_qty}")
+        return
+
+    cart[item_id] = curerent_qty + 1
+
+    name = item.get("type", "Товар")
+    await update.message. reply_text(
+        f"Добавил в корзину: #{item_id} — {name}\n"
+        f"Теперь в вашей корзине: {cart[item_id]}\n\n"
+        f"Открыть корзину: /cart"
+    )
+
+
 def main():
     # ВСТАВЬ СВОЙ ТОКЕН СЮДА:
     token = "YOUR_BOT_TOKEN"
@@ -99,6 +138,7 @@ def main():
     app.add_handler(CommandHandler("catalog", catalog))
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("cart", show_cart))
+    app.add_handler(CommandHandler("add", add_to_cart))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, menu_router))
 
 
