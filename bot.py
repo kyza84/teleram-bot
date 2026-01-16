@@ -1,5 +1,8 @@
 import json
 import asyncio
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from telegram.ext import Application, CommandHandler, MessageHandler, filters 
 from telegram import ReplyKeyboardMarkup
 
@@ -130,21 +133,57 @@ async def add_to_cart(update, context):
     )
 
 
+async def remove_from_cart(update, context):
+     if not context.args:
+        await update.message.reply_text("Напиши так: /remove 1")
+        return
+
+     try:
+        item_id = int(context.args[0])
+     except ValueError:
+        await update.message.reply_text("ID должен быть числом. Пример: /remove 1")
+        return
+
+     user_id = update.effective_user.id
+     cart = CARTS.get(user_id, {})
+
+     if item_id not in cart:
+        await update.message.reply_text("Этого товара нет в корзине.")
+        return
+
+
+     cart[item_id] -= 1
+     if cart[item_id] <= 0:
+        del cart[item_id]
+
+        await update.message.reply_text("- Убрал 1 штуку. Посмотреть: /cart")
+
+
+async def clear_cart(update, context):
+    user_id = update.effective_user.id
+    CARTS.pop(user_id, None)
+    await update.message.reply_text("Корзина очищена. Посмотреть: /cart")
+
+
 def main():
-    # ВСТАВЬ СВОЙ ТОКЕН СЮДА:
-    token = "YOUR_BOT_TOKEN"
+    token = os.getenv("BOT_TOKEN")
 
     app = Application.builder().token(token).build()
-    app.add_handler(CommandHandler("catalog", catalog))
+
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("catalog", catalog))
     app.add_handler(CommandHandler("cart", show_cart))
     app.add_handler(CommandHandler("add", add_to_cart))
+    app.add_handler(CommandHandler("remove", remove_from_cart))
+    app.add_handler(CommandHandler("clear", clear_cart))
+
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, menu_router))
 
-
-    print("Бот запущен. Напиши /catalog в Telegram")
+    print("Бот запущен")
     app.run_polling()
 
 
 if __name__ == "__main__":
     main()
+
+    
